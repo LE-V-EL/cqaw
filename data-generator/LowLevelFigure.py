@@ -3,6 +3,13 @@ import numpy as np
 import os
 import sys
 import cv2
+import enum
+
+class Data_Classes(enum.Enum): 
+    length = 1
+    angle = 2
+    lengths = 3
+    angles = 4
 
 class LowLevelFigure: 
 
@@ -19,8 +26,22 @@ class LowLevelFigure:
     angle_min = 10
     angle_DOF = 90
 
+    @staticmethod
+    def generate_data():
+        ### There are only so many different lengths (12, since all are even) and angles (80) we can create, 
+        ### so for single-element figures I think it makes sense to simply shuffle the order of a preexisting values 
+        ### and not check for the duplicates. 
+
+        ### For four lengths/angles in one figure, 
+        ### can the duplicate test check for the same length/angle in the same index in another figure? 
+
+        for c in Data_Classes: 
+            pass # TODO: edit this
+            
+        return arr_shuffled
+
     @staticmethod 
-    def generate_figure_line(lineLength=None, testFlag=False):
+    def generate_figure_length(lineLength=None, testFlag=False):
         im = np.ones(LowLevelFigure.FigSize, dtype=np.float32) 
         if lineLength is None:
             lineLength = np.random.randint(LowLevelFigure.line_min, LowLevelFigure.line_max)
@@ -51,7 +72,7 @@ class LowLevelFigure:
 
     # Returns a figure with multiple lines and their lengths in numpy array
     @staticmethod
-    def generate_figure_lines(lengths=None, y_positions=None, testFlag=False): # TODO: do something about other "flags" later
+    def generate_figure_lengths(lengths=None, y_positions=None, testFlag=False): # TODO: do something about other "flags" later
         im = np.ones(LowLevelFigure.FigSize, dtype=np.float32) 
         if lengths is None:
             lengths = np.random.randint(LowLevelFigure.line_min, LowLevelFigure.line_max, size=(4,))
@@ -115,7 +136,7 @@ class LowLevelFigure:
 
         return (im, angleSize)
 
-(im, angleSize) = LowLevelFigure.generate_figure_lines(testFlag=True)
+(im, angleSize) = LowLevelFigure.generate_figure_lengths(testFlag=True)
 print(angleSize)
 cv2.imshow("Testing angle",im)
 cv2.waitKey(0)
