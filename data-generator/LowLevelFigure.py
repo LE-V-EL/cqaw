@@ -11,7 +11,9 @@ class LowLevelFigure:
     FigCenter = (50, 50)
     # For lines
     line_min = 6
-    line_max = 40
+    line_max = 60 # Sticking to the Figure12.py value https://github.com/Rhoana/perception/blob/master/EXP/ClevelandMcGill/figure12.py
+    line_x_positions=np.array([15, 35, 55, 75])
+    line_y_positions=np.array([50, 50, 50, 50]) # TODO: What should we do with this? 
     # For angles
     angle_radius = 10
     angle_min = 10
@@ -30,7 +32,8 @@ class LowLevelFigure:
             # If test data, then add variability
             lineWidth = 1 + np.random.randint(0,3); # in Linewidth
             X = LowLevelFigure.FigCenter[0] + np.random.randint(-45, 45)
-            Y = LowLevelFigure.FigCenter[1] + np.random.randint(-20, 20) # in Placement
+            Y = LowLevelFigure.FigCenter[1] + np.random.randint(-10, 10) # in Placement
+            # Still sticking to the Figure12.py value
         else: 
             lineWidth = 1
             X = LowLevelFigure.FigCenter[0]
@@ -46,13 +49,42 @@ class LowLevelFigure:
 
         return (im, lineLength)
 
+    # Returns a figure with multiple lines and their lengths in numpy array
+    @staticmethod
+    def generate_figure_lines(lengths=None, y_positions=None, testFlag=False): # TODO: do something about other "flags" later
+        im = np.ones(LowLevelFigure.FigSize, dtype=np.float32) 
+        if lengths is None:
+            lengths = np.random.randint(LowLevelFigure.line_min, LowLevelFigure.line_max, size=(4,))
+            lengths = np.rint(lengths/2)*2
+        if y_positions is None: 
+            y_positions = LowLevelFigure.line_y_positions+np.random.randint(-5, 5, size=(4,))
+
+        if testFlag:
+            # If test data, then add variability
+            lineWidth = 1 + np.random.randint(0,3); # in Linewidth
+            x_positions = LowLevelFigure.line_x_positions + np.random.randint(-3, 3, size=(4,))# in x-axis placement ("wiggle")
+        else:
+            lineWidth = 1
+            x_positions = LowLevelFigure.line_x_positions
+
+        for i in range(len(lengths)):
+            # draws each line
+            cv2.line(im, (x_positions[i], y_positions[i]), (x_positions[i], y_positions[i]-int(lengths[i]/2)), 0, lineWidth)
+            cv2.line(im, (x_positions[i], y_positions[i]), (x_positions[i], y_positions[i]+int(lengths[i]/2)), 0, lineWidth)
+
+        # adds noise
+        noise = np.random.uniform(0, 0.05, (100, 100))
+        im += noise
+
+        return (im, lengths)
+
 
     # Returns a figure with a single angle and the angle size, in tuple
     @staticmethod
     def generate_figure_angle(angleSize=None, testFlag=False):
         im = np.ones(LowLevelFigure.FigSize, dtype=np.float32) 
         if angleSize is None:
-            angleSize = np.random.randint(LowLevelFigure.angle_min, LowLevelFigure.angle_DOF+1)
+            angleSize = np.random.randint(LowLevelFigure.angle_min, LowLevelFigure.angle_DOF)
 
         if testFlag:
             # If test data, then add variability
@@ -83,7 +115,7 @@ class LowLevelFigure:
 
         return (im, angleSize)
 
-(im, angleSize) = LowLevelFigure.generate_figure_angle(40, True)
+(im, angleSize) = LowLevelFigure.generate_figure_lines(testFlag=True)
 print(angleSize)
 cv2.imshow("Testing angle",im)
 cv2.waitKey(0)
