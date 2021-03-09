@@ -1,3 +1,7 @@
+### Code started 2021 Feb
+### TODO: 
+### - Add "angles"
+### - Check for duplicates 
 import math
 import numpy as np
 import os
@@ -5,40 +9,33 @@ import sys
 import cv2
 import enum
 
-class Data_Classes(enum.Enum): 
-    length = 1
-    angle = 2
-    lengths = 3
-    angles = 4
-
 class LowLevelFigure: 
-
     # Basic parameters for image
-    FigSize = (100, 100)
-    FigCenter = (50, 50)
+    FigSize = (400, 400)
+    FigCenter = (150, 150)
+
     # For lines
-    line_min = 6
-    line_max = 60 # Sticking to the Figure12.py value https://github.com/Rhoana/perception/blob/master/EXP/ClevelandMcGill/figure12.py
-    line_x_positions=np.array([15, 35, 55, 75])
-    line_y_positions=np.array([50, 50, 50, 50]) # TODO: What should we do with this? 
+    line_min = 24
+    line_max = 240 # Sticking to the Figure12.py value https://github.com/Rhoana/perception/blob/master/EXP/ClevelandMcGill/figure12.py
+    line_x_positions=np.array([50, 150, 250, 350])
+    line_y_positions=np.array([150, 150, 150, 150]) 
     # For angles
     angle_radius = 10
     angle_min = 10
     angle_DOF = 90
 
+
     @staticmethod
-    def generate_data():
-        ### There are only so many different lengths (12, since all are even) and angles (80) we can create, 
-        ### so for single-element figures I think it makes sense to simply shuffle the order of a preexisting values 
-        ### and not check for the duplicates. 
+    def generate_figures(data_class, size=5, testFlag=False):
+        switcher = {
+            'length' : LowLevelFigure.generate_figure_length, 
+            'angle' : LowLevelFigure.generate_figure_angle,
+            'lengths' : LowLevelFigure.generate_figure_lengths#,
+            #'angles' : LowLevelFigure.generate_figure_angles
+        }
 
-        ### For four lengths/angles in one figure, 
-        ### can the duplicate test check for the same length/angle in the same index in another figure? 
-
-        for c in Data_Classes: 
-            pass # TODO: edit this
-            
-        return arr_shuffled
+        func = switcher.get(data_class)
+        return [func(testFlag=testFlag) for i in range(size)]
 
     @staticmethod 
     def generate_figure_length(lineLength=None, testFlag=False):
@@ -67,6 +64,9 @@ class LowLevelFigure:
         # adds noise
         noise = np.random.uniform(0, 0.05, (100, 100))
         im += noise
+        im = im*255.0
+        im = np.minimum(im, 255.0)
+        im = np.maximum(im, 0.0)
 
         return (im, lineLength)
 
@@ -96,6 +96,9 @@ class LowLevelFigure:
         # adds noise
         noise = np.random.uniform(0, 0.05, (100, 100))
         im += noise
+        im = im*255.0
+        im = np.minimum(im, 255.0)
+        im = np.maximum(im, 0.0)
 
         return (im, lengths)
 
@@ -109,7 +112,7 @@ class LowLevelFigure:
 
         if testFlag:
             # If test data, then add variability
-            lineWidth = 1 + np.random.randint(0,3); # in Linewidth
+            lineWidth = 1 + np.random.randint(0,4); # in Linewidth
             X = LowLevelFigure.FigCenter[0] + np.random.randint(-30, 30)
             Y = LowLevelFigure.FigCenter[1] + np.random.randint(-30, 30) # in Placement 
         else:
@@ -133,10 +136,15 @@ class LowLevelFigure:
         # adds noise
         noise = np.random.uniform(0, 0.05, (100, 100))
         im += noise
+        im = im*255.0
+        im = np.minimum(im, 255.0)
+        im = np.maximum(im, 0.0)
 
         return (im, angleSize)
 
-(im, angleSize) = LowLevelFigure.generate_figure_lengths(testFlag=True)
-print(angleSize)
-cv2.imshow("Testing angle",im)
-cv2.waitKey(0)
+
+### Quick script for testing LowLevelFigure class
+#(im, angleSize) = LowLevelFigure.generate_figure_lengths(testFlag=True)
+#print(angleSize)
+#cv2.imshow("Testing length",im)
+#cv2.waitKey(0)
