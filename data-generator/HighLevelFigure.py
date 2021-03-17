@@ -6,6 +6,7 @@ import os
 import sys
 import cv2
 import enum
+from time import time
 
 class HighLevelFigure: 
     # Basic parameters for image
@@ -20,48 +21,58 @@ class HighLevelFigure:
     # For pies
     pie_rad_fixed = 100
 
-    train_vocab = ['Pink Lady', 'Empire', 'Fuji', 'Gala', 'Honeycrisp', 'McIntosh', 'Breeze', 'Cosmic Crisp', 'Envy', 'Jazz', 'Kiku', 'Opal', 'Pacific Rose', 'Rome', 'SweeTango']
+    train_vocab = ['PinkLady', 'Empire', 'Fuji', 'Gala', 'Honeycrisp', 'McIntosh', 'Breeze', 'CosmicCrisp', 'Envy', 'Jazz', 'Kiku', 'Opal', 'PacificRose', 'Rome', 'SweeTango']
     test_vocab = ['Valencia', 'Bloody', 'Navel', 'Clementine', 'Tangelo', 'Bitter', 'Bergamot', 'Lima', 'Tangerine', 'Serville', 'Satsuma', 'Maltese', 'Moro', 'Tarocco', 'Hamlin', 'Bahia', 'Washington', 'Jaffa']
 
     @staticmethod
-    def generate_figures(data_class, size=5, testFlag=False):
+    def generate_figures(data_class, counts=(8,2)):
         switcher = {
             'advanced_bar' : HighLevelFigure.generate_figure_bar, 
             'advanced_pie' : HighLevelFigure.generate_figure_pie
         }
+        figFunc = switcher.get(data_class)
 
-        def check_distribution(nums):
-            # we dont care until we reach larger amounts
-            if len(nums) < 1000:
-                return True
-            c = Counter(nums)
-            # not adding anything over 110% of the mean amount in each angle bucket
-            threshold = np.mean(list(c.values())) * 1.1
-            for (k, v) in c.items():
-                if int(v) > threshold:
-                    return False
-            return True
+        ### DEPRECATED
+        #def check_distribution(nums):
+        #    # we dont care until we reach larger amounts
+        #    if len(nums) < 1000:
+        #        return True
+        #    c = Counter(nums)
+        #    # not adding anything over 110% of the mean amount in each angle bucket
+        #    threshold = np.mean(list(c.values())) * 1.1
+        #    for (k, v) in c.items():
+        #        if int(v) > threshold:
+        #            return False
+        #    return True
 
-        all_samples_flat = []
-        all_samples = []
-        for i in range(size):
-            # Sample sets of numbers
-            while True:
-                num_of_numbers = np.random.randint(3, 7)
-                sample = np.random.randint(HighLevelFigure.val_min, HighLevelFigure.val_max+1, num_of_numbers).tolist()
-                if check_distribution(all_samples_flat+sample):
-                    # If meets requirement, add it to the samples
-                    all_samples_flat = all_samples_flat + sample
-                    all_samples = all_samples + [sample]
-                    break
-                # Otherwise, sample again
-        func = switcher.get(data_class)
-        return [func(nums=all_samples[i], testFlag=testFlag) for i in range(size)]
+        total_count = counts[0]+counts[1]
+        num_of_numbers = np.random.randint(3, 7, total_count) # How many bars/pies each figure will have
+        N = np.sum(num_of_numbers)
+        flat = np.repeat(np.arange(HighLevelFigure.val_min,  HighLevelFigure.val_max+1), 
+            math.ceil(N/(HighLevelFigure.val_max+1-HighLevelFigure.val_min)))
+        np.random.shuffle(flat)
+
+        trainNums = []
+        testNums = []
+
+        curIdx = 0
+        for i in range(counts[0]):
+            # Trims the flat array into array of arrays, 
+            # FOR TRAINING SET
+            trainNums = trainNums + [flat[curIdx:curIdx+num_of_numbers[i]]]
+            curIdx = curIdx+num_of_numbers[i]
+
+        for i in range(counts[1]):
+            testNums = testNums + [flat[curIdx:curIdx+num_of_numbers[i]]]
+            curIdx = curIdx+num_of_numbers[i]
+
+        return ([figFunc(nums=trainNums[i], testFlag=False) for i in range(counts[0])], 
+            [figFunc(nums=testNums[i], testFlag=True) for i in range(counts[1])])
 
     @staticmethod
     def generate_figure_bar(nums=None, testFlag=False): 
         im = np.ones(HighLevelFigure.FigSize, dtype=np.float32) 
-        if nums==None:
+        if nums is None:
             nums = np.random.randint(HighLevelFigure.val_min, HighLevelFigure.val_max+1, size=(6,))
         else: 
             nums = np.array(nums)
@@ -101,10 +112,14 @@ class HighLevelFigure:
         # Adds noise and normalizes
         noise = np.random.uniform(0, 0.05, HighLevelFigure.FigSize)
         im += noise
-        # TODO: comment later
-        #cv2.imshow("Testing angle",im)
-        #cv2.waitKey(0)
-        
+
+
+        # TODO: comment this later
+        #tempText = np.array2string(nums)
+        #tempText2 = np.array2string(varieties)
+        #font = cv2.FONT_HERSHEY_SIMPLEX
+        #cv2.putText(im, tempText, (150, 15), font, 0.4, 0.3)
+        #cv2.putText(im, tempText2, (50, 25), font, 0.4, 0.3)
         # TODO: uncomment this part when you are going to save the figure instead of showing
         im = im*255.0
         im = np.minimum(im, 255.0)
@@ -116,7 +131,7 @@ class HighLevelFigure:
     @staticmethod
     def generate_figure_pie(nums=None, testFlag=False):
         im = np.ones(HighLevelFigure.FigSize, dtype=np.float32) 
-        if nums==None:
+        if nums is None:
             nums = np.random.randint(HighLevelFigure.val_min, HighLevelFigure.val_max+1, size=(6,))
         else: 
             nums = np.array(nums)
@@ -179,6 +194,13 @@ class HighLevelFigure:
         textY = int(np.round(textY - (textsize[1]*textscale/2)))
         cv2.putText(im, text, (textX, textY), font, textscale, 0)
 
+        # TODO: comment this later
+        #tempText = np.array2string(nums)
+        #tempText2 = np.array2string(varieties)
+        #font = cv2.FONT_HERSHEY_SIMPLEX
+        #cv2.putText(im, tempText, (150, 15), font, 0.4, 0.3)
+        #cv2.putText(im, tempText2, (50, 25), font, 0.4, 0.3)
+        
         # Adds noise and normalizes
         noise = np.random.uniform(0, 0.05, im.shape)
         im += noise

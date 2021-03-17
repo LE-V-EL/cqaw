@@ -6,6 +6,9 @@ import os,sys
 import cv2
 import csv
 
+simple_dat_classes = ['length','lengths', 'angle', 'simple_bar','simple_pie'] # TODO: add angles later
+advanced_dat_classes = ['advanced_bar', 'advanced_pie']
+
 class SimpleDataset:
 
     arr = []
@@ -14,10 +17,10 @@ class SimpleDataset:
 
     QUERIES = {'length': 'What is the length of the line in the figure?', 
             'lengths': 'What are the lengths of the lines in the figure, from left to right?', 
-            'angle': 'What is the degree of the angle in the figure?',
-            'angles': 'What are the degrees of the angles in the figure, from left to right?', 
-            'simple_bar': 'What are the values represented in the figure?', 
-            'simple_pie': 'What are the values represented in the figure, clockwise from the top?'}
+            'angle': 'What is the size of the angle in the figure?',
+            'angles': 'What are the sizes of the angles in the figure, from left to right?', 
+            'simple_bar': 'What are the values represented in the bar graph, from left to right?', 
+            'simple_pie': 'What are the values represented in the pie graph, clockwise from the top?'}
 
     LEVELS = {'length': 1, 
             'lengths': 1, 
@@ -27,7 +30,7 @@ class SimpleDataset:
             'simple_pie': 2}
 
     def __init__(self, 
-        counts = {"train":8, "test":20}, 
+        counts = {"train":5, "test":5}, 
         data_class='angle'):
         self.counts = counts
         self.data_class = data_class
@@ -36,37 +39,23 @@ class SimpleDataset:
 
     def generate_images(self):
         if self.level == 1:
-            self.train_dats = LowLevelFigure.generate_figures(self.data_class, size=self.counts['train'], testFlag=False)
-            self.test_dats = LowLevelFigure.generate_figures(self.data_class, size=self.counts['test'], testFlag=True)
+            (self.train_dats, self.test_dats) = LowLevelFigure.generate_figures(self.data_class, counts=(self.counts['train'], self.counts['test']))
         elif self.level == 2:
-            self.train_dats = MidLevelFigure.generate_figures(self.data_class, size=self.counts['train'], testFlag=False)
-            self.test_dats = MidLevelFigure.generate_figures(self.data_class, size=self.counts['test'], testFlag=True)
+            (self.train_dats, self.test_dats) = MidLevelFigure.generate_figures(self.data_class, counts=(self.counts['train'], self.counts['test']))
 
-    def export_files(self, path="./fig/",prefix='Sample_'):
-        with open(path+prefix+'train_metadata.csv', 'a', newline='') as csvfile:
-            fieldnames = ['filename', 'level', 'data_class', 'query', 'true_label']
-            csv_writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            #csv_writer.writeheader()
-
-            for i in range(len(self.train_dats)):
-                td = self.train_dats[i]
-                # Writing to the image file 
-                im_filename = path+prefix+self.data_class+'_train_'+str(i)+'.png'
-                cv2.imwrite(im_filename, td[0])
+    def export_image_files(self, path="./fig/",prefix='Sample_'):
+        for i in range(len(self.train_dats)):
+            td = self.train_dats[i]
+            # Writing to the image file 
+            im_filename = path+prefix+self.data_class+'_train_'+str(i)+'.png'
+            cv2.imwrite(im_filename, td[0])
                 #   Writing the metadata 
-                csv_writer.writerow({'filename': im_filename, 'level': self.level, 'data_class': self.data_class, 'query': self.query, 'true_label': td[1]})
-                #TODO: append instead of writing from scratch
 
-        with open(path+prefix+'test_metadata.csv', 'a', newline='') as csvfile:
-            fieldnames = ['filename', 'level', 'data_class', 'query', 'true_label']
-            csv_writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            #csv_writer.writeheader()
-            for i in range(len(self.test_dats)):
-                td = self.test_dats[i]
-                im_filename = path+prefix+self.data_class+'_test_'+str(i)+'.png'
-                cv2.imwrite(im_filename, td[0])
-                csv_writer.writerow({'filename': im_filename, 'level': self.level, 'data_class': self.data_class, 'query': self.query, 'true_label': td[1]})
-
+        for i in range(len(self.test_dats)):
+            td = self.test_dats[i]
+            im_filename = path+prefix+self.data_class+'_test_'+str(i)+'.png'
+            cv2.imwrite(im_filename, td[0])
+            
 
 class AdvancedDataset: 
     arr = []
@@ -81,13 +70,15 @@ class AdvancedDataset:
         1: 'Which variety has the maximum length?', 
         2: 'Which variety has the minimum length?', 
         3: 'Is {X} bigger than {Y}?', 
-        4: 'Is {X} smaller than {Y}?'}
+        4: 'Is {X} smaller than {Y}?',
+        5: 'Is {X} bigger than the sum of {Y} and {Z}?'}
 
     PIE_QUERIES = {0: 'What is the value of {X}?', 
         1: 'Which variety has the maximum value?', 
         2: 'Which variety has the minimum value?', 
         3: 'Is {X} bigger than {Y}?',
-        4: 'Is {X} smaller than {Y}?'}
+        4: 'Is {X} smaller than {Y}?',
+        5: 'Is {X} bigger than the sum of {Y} and {Z}?'}
 
     def __init__(self, 
         counts = {"train":5, "test":5}, 
@@ -97,8 +88,7 @@ class AdvancedDataset:
         self.level = 3
 
     def generate_images(self):
-        self.train_dats = HighLevelFigure.generate_figures(self.data_class, size=self.counts['train'], testFlag=False)
-        self.test_dats = HighLevelFigure.generate_figures(self.data_class, size=self.counts['test'], testFlag=True)
+        (self.train_dats, self.test_dats) = HighLevelFigure.generate_figures(self.data_class, counts=(self.counts['train'], self.counts['test']))
 
     def query_matcher(self):
         # Matches images with queries and auto-label
@@ -117,30 +107,40 @@ class AdvancedDataset:
         # TODO: implement this! 
         print(self.PIE_QUERIES.keys())
 
-    def export_files(self, path="./fig/",prefix='Sample_'):
-        with open(path+prefix+'train_metadata.csv', 'a', newline='') as csvfile:
-            csv_writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            for i in range(len(self.train_dats)):
-                td = self.train_dats[i]
-                # Writing to the image file 
-                im_filename = path+prefix+self.data_class+'_train_'+str(i)+'.png'
-                cv2.imwrite(im_filename, td[0])
+    def export_image_files(self, path="./fig/",prefix='Sample_'):
+        for i in range(len(self.train_dats)):
+            td = self.train_dats[i]
+            # Writing to the image file 
+            im_filename = path+prefix+self.data_class+'_train_'+str(i)+'.png'
+            cv2.imwrite(im_filename, td[0])
 
-        with open(path+prefix+'test_metadata.csv', 'a', newline='') as csvfile:
-            #csv_writer.writeheader()
-            for i in range(len(self.test_dats)):
-                td = self.test_dats[i]
-                im_filename = path+prefix+self.data_class+'_test_'+str(i)+'.png'
-                cv2.imwrite(im_filename, td[0])
+        for i in range(len(self.test_dats)):
+            td = self.test_dats[i]
+            im_filename = path+prefix+self.data_class+'_test_'+str(i)+'.png'
+            cv2.imwrite(im_filename, td[0])
 
 
 ### Generation script sample
-#d = SimpleDataset(data_class='simple_bar')
-#d.generate_images()
-#d.export_files(path='./test_fig/')
+with open('TRAIN_metadata.txt', 'w') as outfile:
+    for c in simple_dat_classes:    
+        d = SimpleDataset(data_class=c)
+        d.generate_images()
+        d.export_image_files(path='./test_fig/', images_only=True)
+        # TODO: do something about train_metadata
+        json.dump(train_metadata, outfile)
+
+#for c in advanced_dat_classes: 
+#    d = AdvancedDataset(data_class=c)
+#    d.generate_images()
+#    #d.query_matcher()
+#    d.export_files(path='./test_fig/', images_only=True)
 
 # TODO: Header should be added manually to each csv file
-d = AdvancedDataset(data_class='advanced_pie')
-d.generate_images()
-d.query_matcher()
+#d = AdvancedDataset(data_class='advanced_bar')
+#d.generate_images()
+#d.query_matcher()
 #d.export_files(path='./test_fig/')
+
+#d = SimpleDataset(data_class='simple_bar')
+#d.generate_images()
+#d.export_files(path='./test_fig/', images_only=True)

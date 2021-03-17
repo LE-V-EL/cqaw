@@ -10,7 +10,7 @@ import enum
 class MidLevelFigure: 
     # Basic parameters for image
     FigSize = (400, 400)
-    FigCenter = (150, 150)
+    FigCenter = (200, 200)
     bottomY = 20
 
     # For bars
@@ -23,47 +23,59 @@ class MidLevelFigure:
     pie_max = 120 # max of radius, for variable task.. 
 
 
-
     @staticmethod
-    def generate_figures(data_class, size=5, testFlag=False):
+    def generate_figures(data_class, counts=(8,2)):
         switcher = {
             'simple_bar' : MidLevelFigure.generate_figure_bar, 
             'simple_pie' : MidLevelFigure.generate_figure_pie
         }
+        figFunc = switcher.get(data_class)
 
-        def check_distribution(nums):
-            # we dont care until we reach larger amounts
-            if len(nums) < 1000:
-                return True
-            c = Counter(nums)
-            # not adding anything over 110% of the mean amount in each angle bucket
-            threshold = np.mean(list(c.values())) * 1.1
-            for (k, v) in c.items():
-                if int(v) > threshold:
-                    return False
-            return True
+        ### We don't need to check for distribution anymore! 
+        #def check_distribution(nums):
+        #    # we dont care until we reach larger amounts
+        #    if len(nums) < 1000:
+        #        return True
+        #    c = Counter(nums)
+        #    # not adding anything over 110% of the mean amount in each angle bucket
+        #    threshold = np.mean(list(c.values())) * 1.1
+        #    for (k, v) in c.items():
+        #        if int(v) > threshold:
+        #            return False
+        #    return True
 
-        all_samples_flat = []
-        all_samples = []
-        for i in range(size):
-            # Sample sets of numbers
-            while True:
-                num_of_numbers = np.random.randint(3, 7)
-                sample = np.random.randint(MidLevelFigure.val_min, MidLevelFigure.val_max+1, num_of_numbers).tolist()
-                if check_distribution(all_samples_flat+sample):
-                    # If meets requirement, add it to the samples
-                    all_samples_flat = all_samples_flat + sample
-                    all_samples = all_samples + [sample]
-                    break
-                # Otherwise, sample again
-        func = switcher.get(data_class)
-        return [func(nums=all_samples[i], testFlag=testFlag) for i in range(size)]
+        total_count = counts[0]+counts[1]
+        num_of_numbers = np.random.randint(3, 7, total_count) # How many bars/pies each figure will have
+        N = np.sum(num_of_numbers)
+
+        flat = np.repeat(np.arange(MidLevelFigure.val_min,  MidLevelFigure.val_max+1), 
+            math.ceil(N/(MidLevelFigure.val_max+1-MidLevelFigure.val_min)))
+        np.random.shuffle(flat)
+
+        trainNums = []
+        testNums = []
+
+        curIdx = 0
+        for i in range(counts[0]):
+            # Trims the flat array into array of arrays, 
+            # FOR TRAINING SET
+            trainNums = trainNums + [flat[curIdx:curIdx+num_of_numbers[i]]]
+            curIdx = curIdx+num_of_numbers[i]
+
+        for i in range(counts[1]):
+            # Trims the flat array into array of arrays, 
+            # FOR TEST SET
+            testNums = testNums + [flat[curIdx:curIdx+num_of_numbers[i]]]
+            curIdx = curIdx+num_of_numbers[i]
+
+        return ([figFunc(nums=trainNums[i], testFlag=False) for i in range(counts[0])], 
+            [figFunc(nums=testNums[i], testFlag=True) for i in range(counts[1])])
 
     @staticmethod
     def generate_figure_bar(nums=None, testFlag=False): 
         im = np.ones(MidLevelFigure.FigSize, dtype=np.float32) 
         # All black-and-white pie chart
-        if nums==None:
+        if nums is None:
             nums = np.random.randint(MidLevelFigure.val_min, MidLevelFigure.val_max+1, size=(6,))
         else: 
             nums = np.array(nums)
@@ -90,10 +102,11 @@ class MidLevelFigure:
         # Adds noise and normalizes
         noise = np.random.uniform(0, 0.05, im.shape)
         im += noise
-
-        # TODO: comment later
-        #cv2.imshow("Testing angle",im)
-        #cv2.waitKey(0)
+        
+        # TODO: comment this later
+        #tempText = np.array2string(nums)
+        #font = cv2.FONT_HERSHEY_SIMPLEX
+        #cv2.putText(im, tempText, (150, 15), font, 0.4, 0.3)
         
         # TODO: uncomment this part when you are going to save the figure instead of showing
         im = im*255.0
@@ -107,7 +120,7 @@ class MidLevelFigure:
     def generate_figure_pie(nums=None, testFlag=False):
         im = np.ones(MidLevelFigure.FigSize, dtype=np.float32) 
         # All black-and-white pie chart
-        if nums==None:
+        if nums is None:
             nums = np.random.randint(MidLevelFigure.val_min, MidLevelFigure.val_max+1, size=(6,))
         nums = nums/np.sum(nums)
         nums = np.around(nums, 3)
@@ -143,6 +156,11 @@ class MidLevelFigure:
             # updates first line dir
             first_line_dir = second_line_dir
 
+        # TODO: comment this later
+        #tempText = np.array2string(nums)
+        #font = cv2.FONT_HERSHEY_SIMPLEX
+        #cv2.putText(im, tempText, (150, 15), font, 0.4, 0.3)
+        
         # Adds noise and normalizes
         noise = np.random.uniform(0, 0.05, im.shape)
         im += noise
