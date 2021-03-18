@@ -16,4 +16,4 @@ Generating datasets for CQAW
 5. Edit variables in `./generation_script.py` to customize dataset size and path to files
 6. Run `python generation_script.py` 
 
-(If you get an ImportError for libL.so, apt install `libgl1-mesa-glx`) 
+(If you get an ImportError for libL.so, try apt installing `libgl1-mesa-glx`) 
