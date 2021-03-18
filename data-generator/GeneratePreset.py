@@ -89,7 +89,7 @@ if FULL_DATA_SIZE>1000:
     completed_data_size = 0
     batch_idx = 0
     while completed_data_size < FULL_DATA_SIZE:
-        Print("------------------------------------------")
+        print("------------------------------------------")
         print("Creating batch "+str(batch_idx))
         batch_size = min(max_batch_size, FULL_DATA_SIZE-completed_data_size)
         data_counts = {'train':int(round(batch_size*0.8)), 'test':batch_size-int(round(batch_size*0.8))}
@@ -121,7 +121,7 @@ if FULL_DATA_SIZE>1000:
             # Training dataset
             for i in range(len(TRAIN_DATA)):
                 if (i%1000==999):
-                    print("Exporting " + str(i) + "th image in data class "+data_class)
+                    print("Exporting " + str(i) + "th training image in data class "+data_class)
                 # Exports image files
                 td = TRAIN_DATA[i]
                 im_filename = prefix+data_class+'_train_'+str(i)+'b'+str(batch_idx)+'.png'
