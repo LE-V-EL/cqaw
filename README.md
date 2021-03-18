@@ -12,7 +12,8 @@ Combining codes from Rhoana/Perception and haehn/Instance-based-RN by Zhihao.
 2. `conda env create --file environment.yml`
 3. `conda activate cqaw-test`
 4.  `cd data-generator`
-5. Edit variables in `./generation_script.py` to customize dataset size and path to files
-6. Run `python generation_script.py` 
+5.  `mkdir (your-directory-name)` if intending to save dataset in a subdirectory. 
+6. Edit variables in `./generation_script.py` to customize dataset size and path to files
+7. Run `python generation_script.py` 
 
 (If you get an ImportError for libL.so, try apt installing `libgl1-mesa-glx`) 
