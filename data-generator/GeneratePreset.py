@@ -24,9 +24,9 @@ class Dataclass(Enum):
     ADVANCED_PIE=7 # advanced pie plots, level 4
 
 ### CHANGE THIS PART FOR DATASET WITH DIFFERENT SIZE
-data_counts = {'train':80, 'test':20}
-path = './sample_fig/'
-prefix = 'SAMPLE_'
+data_counts = {'train':8000, 'test':2000}
+path = './competition_data/'
+prefix = 'DAT_'
 
 # Query matchmaker for advanced bar and pie plots
 def advanced_query_matcher(dset):
@@ -54,7 +54,7 @@ def advanced_query_matcher(dset):
             formatQuery, funQuery = QUERIES[Q_idx]
             ints = np.random.choice(len(nums),3,replace=False)
             lab = funQuery(nums, ints[0], ints[1], ints[2])
-            if lab is not None: # TODO: do something 
+            if lab is not None: 
                 strQuery = formatQuery.format(X=varieties[ints[0]], Y=varieties[ints[1]], Z=varieties[ints[2]])
                 if Q_idx == 1 or Q_idx == 2: 
                     lab = varieties[lab]
@@ -84,6 +84,7 @@ test_metadata = []
 admin_metadata = []
 
 for data_class, mem in Dataclass.__members__.items():
+    print("Starting generating data for: "+data_class)
     level_switcher = {
         # This dictionary matches each data class with a tuple, 
         # which includes (figure class, level in integer)
@@ -104,11 +105,14 @@ for data_class, mem in Dataclass.__members__.items():
         (train_queries, train_labels) = advanced_query_matcher(TRAIN_DATA)
         (test_queries, test_labels) = advanced_query_matcher(TEST_DATA)
 
+    print("Data generation completed. Now exporting to files")
     # Training dataset
     for i in range(len(TRAIN_DATA)):
+        if (i%1000==999):
+            print("Exporting " + str(i) + "th image in data class "+data_class)
         # Exports image files
         td = TRAIN_DATA[i]
-        im_filename = prefix+data_class+'_train_'+str(i)+'.png'
+        im_filename = prefix+data_class+'_train_'+str(DATASET_IDX)+str(i)+'.png'
         cv2.imwrite(path+im_filename, td[0])
         # Writing metadata
         if lev<3:
@@ -124,7 +128,7 @@ for data_class, mem in Dataclass.__members__.items():
     for i in range(len(TEST_DATA)): 
         # Exports image files
         td = TEST_DATA[i]
-        im_filename = prefix+data_class+'_test_'+str(i)+'.png'
+        im_filename = prefix+data_class+'_test_'+str(DATASET_IDX)+str(i)+'.png'
         cv2.imwrite(path+im_filename, td[0])
         # Writing metadata
         if lev<3:
@@ -144,9 +148,9 @@ for data_class, mem in Dataclass.__members__.items():
         test_metadata = test_metadata + [mtdt]
         admin_metadata = admin_metadata + [amtdt]
 
-    with open('TRAIN_metadata.txt', 'w') as outfile:
+    with open(path+'TRAIN_metadata.txt', 'w') as outfile:
         json.dump(train_metadata, outfile, default=convert)
-    with open('TEST_metadata.txt', 'w') as outfile:
+    with open(path+'TEST_metadata.txt', 'w') as outfile:
         json.dump(test_metadata, outfile, default=convert)
-    with open('ADMIN_metadata.txt', 'w') as outfile: 
+    with open(path+'ADMIN_metadata.txt', 'w') as outfile: 
         json.dump(admin_metadata, outfile, default=convert)
