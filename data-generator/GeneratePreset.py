@@ -16,14 +16,14 @@ from HighLevelFigure import HighLevelFigure
 
 # The type of data classes we will be generating
 class Dataclass(Enum):
-    LENGTH = 0
-    LENGTHS = 1
-    ANGLE = 2
-    ANGLES = 3
+    #LENGTH = 0
+    #LENGTHS = 1
+    #ANGLE = 2
+    #ANGLES = 3
     SIMPLE_BAR=4 # simple bar plot, level 2
     SIMPLE_PIE=5 # simple pie plot, level 2
-    ADVANCED_BAR=6 # advanced bar plots, level 3
-    ADVANCED_PIE=7 # advanced pie plots, level 4
+    #ADVANCED_BAR=6 # advanced bar plots, level 3
+    #ADVANCED_PIE=7 # advanced pie plots, level 4
 
 SIMPLE_QUERIES = ['What is the length of the line in the figure?', 'What are the lengths of the lines in the figure, from left to right?', 
             'What is the size of the angle in the figure?','What are the sizes of the angles in the figure, from left to right?', 
@@ -54,6 +54,7 @@ def advanced_query_matcher(dset):
         while True:
             Q_idx = np.random.randint(n_queries)
             formatQuery, funQuery = QUERIES[Q_idx]
+            assert len(nums) > 2, str(nums)
             ints = np.random.choice(len(nums),3,replace=False)
             lab = funQuery(nums, ints[0], ints[1], ints[2])
             if lab is not None: 
@@ -82,7 +83,7 @@ def batch_generation(path='./competition_data/', prefix='', batch_idx=0, batch_s
     # If first batch, resets the metadata files and writes header
     csv_train_columns = ['filename', 'level', 'classtype', 'query', 'label']
     csv_test_columns = ['filename', 'level', 'classtype', 'query']
-    if batch_idx == 0:
+    if batch_idx == -1:
         with open(path+'TRAIN_metadata.csv', 'w') as outfile:
             dw = csv.DictWriter(outfile, delimiter=',', fieldnames=csv_train_columns) 
             dw.writeheader() 
@@ -92,7 +93,7 @@ def batch_generation(path='./competition_data/', prefix='', batch_idx=0, batch_s
         with open(path+'ADMIN_metadata.csv', 'w') as outfile: 
             dw = csv.DictWriter(outfile, delimiter=',', fieldnames=csv_train_columns) 
             dw.writeheader() 
-
+        return
 
     for data_class, mem in Dataclass.__members__.items():
         print("Starting generating data for: "+data_class)
