@@ -6,7 +6,7 @@ from enum import Enum
 from collections import Counter 
 from time import time
 import cv2
-import json
+import csv
 
 from LowLevelFigure import LowLevelFigure
 from MidLevelFigure import MidLevelFigure
@@ -17,14 +17,14 @@ class Dataclass(Enum):
     LENGTH = 0
     LENGTHS = 1
     ANGLE = 2
-    ANGLES = 3
-    SIMPLE_BAR=4 # simple bar plot, level 2
-    SIMPLE_PIE=5 # simple pie plot, level 2
-    ADVANCED_BAR=6 # advanced bar plots, level 3
-    ADVANCED_PIE=7 # advanced pie plots, level 4
+    ANGLES = 3#
+    #SIMPLE_BAR=4 # simple bar plot, level 2
+    #SIMPLE_PIE=5 # simple pie plot, level 2
+    #ADVANCED_BAR=6 # advanced bar plots, level 3
+    #ADVANCED_PIE=7 # advanced pie plots, level 4
 
 ### CHANGE THIS PART FOR DATASET WITH DIFFERENT SIZE
-FULL_DATA_SIZE = 100000
+FULL_DATA_SIZE = 100
 path = './competition_data/'
 prefix = 'DAT_'
 
@@ -78,13 +78,9 @@ SIMPLE_QUERIES = ['What is the length of the line in the figure?', 'What are the
             'What is the size of the angle in the figure?','What are the sizes of the angles in the figure, from left to right?', 
             'What are the values represented in the bar graph, from left to right?', 'What are the values represented in the pie graph, clockwise from the top?']
 
-
-train_metadata = []
-test_metadata = []
-admin_metadata = []
-
+csv_train_columns = ['filename', 'level', 'classtype', 'query', 'label']
 # If the full data size is too large, we split it up in batches
-if FULL_DATA_SIZE>1000: 
+if True: 
     max_batch_size = 10000
     completed_data_size = 0
     batch_idx = 0
@@ -94,6 +90,10 @@ if FULL_DATA_SIZE>1000:
         batch_size = min(max_batch_size, FULL_DATA_SIZE-completed_data_size)
         data_counts = {'train':int(round(batch_size*0.8)), 'test':batch_size-int(round(batch_size*0.8))}
         print("Composed of "+str(data_counts['train'])+" training data and "+str(data_counts['test'])+" test data")
+
+        train_metadata = []
+        test_metadata = []
+        admin_metadata = []
 
         for data_class, mem in Dataclass.__members__.items():
             print("Starting generating data for: "+data_class)
@@ -160,11 +160,13 @@ if FULL_DATA_SIZE>1000:
                 test_metadata = test_metadata + [mtdt]
                 admin_metadata = admin_metadata + [amtdt]
 
-        with open(path+'TRAIN_metadata.txt', 'w') as outfile:
-            json.dump(train_metadata, outfile, default=convert)
-        with open(path+'TEST_metadata.txt', 'w') as outfile:
-            json.dump(test_metadata, outfile, default=convert)
-        with open(path+'ADMIN_metadata.txt', 'w') as outfile: 
-            json.dump(admin_metadata, outfile, default=convert)
+        with open(path+'TRAIN_metadata.csv', 'a') as outfile:
+            csv.DictWriter(outfile, train_metadata, fieldnames=csv_train_columns)
+        with open(path+'TEST_metadata.csv', 'a') as outfile:
+            csv.DictWriter(outfile, test_metadata, fieldnames=csv_test_columns)
+        with open(path+'ADMIN_metadata.csv', 'a') as outfile: 
+            json.dump(outfile, admin_metadata, filednames=csv_train_column)
 
         batch_idx = batch_idx + 1
+        completed_data_size = completed_data_size + batch_size
+
