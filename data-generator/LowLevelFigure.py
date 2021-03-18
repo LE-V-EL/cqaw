@@ -1,6 +1,4 @@
 ### Code started 2021 Feb
-### TODO: 
-### - Add "angles"
 import math
 import numpy as np
 import os

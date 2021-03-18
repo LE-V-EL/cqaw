@@ -1,8 +1,5 @@
 ### Code started 2021 Feb
-### Sample generation for CQAW competition 
 ###
-### Author: Hayoun Oh
-### Thanks to Dr. Yunhai Wang and his group for providing mid-level dataset and generation code
 import numpy as np
 from enum import Enum
 from collections import Counter 
