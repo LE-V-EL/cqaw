@@ -17,14 +17,14 @@ class Dataclass(Enum):
     LENGTH = 0
     LENGTHS = 1
     ANGLE = 2
-    ANGLES = 3#
-    #SIMPLE_BAR=4 # simple bar plot, level 2
-    #SIMPLE_PIE=5 # simple pie plot, level 2
-    #ADVANCED_BAR=6 # advanced bar plots, level 3
-    #ADVANCED_PIE=7 # advanced pie plots, level 4
+    ANGLES = 3
+    SIMPLE_BAR=4 # simple bar plot, level 2
+    SIMPLE_PIE=5 # simple pie plot, level 2
+    ADVANCED_BAR=6 # advanced bar plots, level 3
+    ADVANCED_PIE=7 # advanced pie plots, level 4
 
 ### CHANGE THIS PART FOR DATASET WITH DIFFERENT SIZE
-FULL_DATA_SIZE = 100
+FULL_DATA_SIZE = 10
 path = './competition_data/'
 prefix = 'DAT_'
 
@@ -79,6 +79,17 @@ SIMPLE_QUERIES = ['What is the length of the line in the figure?', 'What are the
             'What are the values represented in the bar graph, from left to right?', 'What are the values represented in the pie graph, clockwise from the top?']
 
 csv_train_columns = ['filename', 'level', 'classtype', 'query', 'label']
+csv_test_columns = ['filename', 'level', 'classtype', 'query']
+with open(path+'TRAIN_metadata.csv', 'a') as outfile:
+    dw = csv.DictWriter(outfile, delimiter=',', fieldnames=csv_train_columns) 
+    dw.writeheader() 
+with open(path+'TEST_metadata.csv', 'a') as outfile:
+    dw = csv.DictWriter(outfile, delimiter=',', fieldnames=csv_test_columns) 
+    dw.writeheader() 
+with open(path+'ADMIN_metadata.csv', 'a') as outfile: 
+    dw = csv.DictWriter(outfile, delimiter=',', fieldnames=csv_train_columns) 
+    dw.writeheader() 
+
 # If the full data size is too large, we split it up in batches
 if True: 
     max_batch_size = 10000
@@ -161,11 +172,17 @@ if True:
                 admin_metadata = admin_metadata + [amtdt]
 
         with open(path+'TRAIN_metadata.csv', 'a') as outfile:
-            csv.DictWriter(outfile, train_metadata, fieldnames=csv_train_columns)
+            dw = csv.DictWriter(outfile, fieldnames=csv_train_columns)
+            for d in train_metadata:
+                dw.writerow(d)
         with open(path+'TEST_metadata.csv', 'a') as outfile:
-            csv.DictWriter(outfile, test_metadata, fieldnames=csv_test_columns)
+            dw = csv.DictWriter(outfile, fieldnames=csv_test_columns)
+            for d in test_metadata:
+                dw.writerow(d)
         with open(path+'ADMIN_metadata.csv', 'a') as outfile: 
-            json.dump(outfile, admin_metadata, filednames=csv_train_column)
+            dw = csv.DictWriter(outfile, fieldnames=csv_train_columns)
+            for d in admin_metadata:
+                dw.writerow(d)
 
         batch_idx = batch_idx + 1
         completed_data_size = completed_data_size + batch_size
