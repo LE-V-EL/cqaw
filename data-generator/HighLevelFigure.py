@@ -49,7 +49,7 @@ class HighLevelFigure:
         num_of_numbers = np.random.randint(3, 7, total_count) # How many bars/pies each figure will have
         N = np.sum(num_of_numbers)
         flat = np.repeat(np.arange(HighLevelFigure.val_min,  HighLevelFigure.val_max+1), 
-            math.ceil(N/(HighLevelFigure.val_max+1-HighLevelFigure.val_min)))
+            math.ceil(N/(HighLevelFigure.val_max+1-HighLevelFigure.val_min)+1))
         np.random.shuffle(flat)
 
         trainNums = []
@@ -59,12 +59,12 @@ class HighLevelFigure:
         for i in range(counts[0]):
             # Trims the flat array into array of arrays, 
             # FOR TRAINING SET
-            trainNums = trainNums + [flat[curIdx:curIdx+num_of_numbers[i]]]
+            trainNums = trainNums + [flat[curIdx:(curIdx+num_of_numbers[i])]]
             curIdx = curIdx+num_of_numbers[i]
 
-        for i in range(counts[1]):
-            testNums = testNums + [flat[curIdx:curIdx+num_of_numbers[i]]]
-            curIdx = curIdx+num_of_numbers[i]
+        for j in range(counts[0], counts[0]+counts[1]):
+            testNums = testNums + [flat[curIdx:(curIdx+num_of_numbers[j])]]
+            curIdx = curIdx+num_of_numbers[j]
 
         return ([figFunc(nums=trainNums[i], testFlag=False) for i in range(counts[0])], 
             [figFunc(nums=testNums[i], testFlag=True) for i in range(counts[1])])
@@ -74,8 +74,8 @@ class HighLevelFigure:
         im = np.ones(HighLevelFigure.FigSize, dtype=np.float32) 
         if nums is None:
             nums = np.random.randint(HighLevelFigure.val_min, HighLevelFigure.val_max+1, size=(6,))
-        else: 
-            nums = np.array(nums)
+        #else: 
+        #    nums = np.array(nums)
         num = len(nums)
 
         if testFlag: 
@@ -113,7 +113,6 @@ class HighLevelFigure:
         noise = np.random.uniform(0, 0.05, HighLevelFigure.FigSize)
         im += noise
 
-
         # TODO: comment this later
         #tempText = np.array2string(nums)
         #tempText2 = np.array2string(varieties)
@@ -125,6 +124,7 @@ class HighLevelFigure:
         im = np.minimum(im, 255.0)
         im = np.maximum(im, 0.0)
 
+        assert len(nums) > 2
         # Returns the figure and true labels
         return (im, varieties, nums)
 
@@ -133,8 +133,8 @@ class HighLevelFigure:
         im = np.ones(HighLevelFigure.FigSize, dtype=np.float32) 
         if nums is None:
             nums = np.random.randint(HighLevelFigure.val_min, HighLevelFigure.val_max+1, size=(6,))
-        else: 
-            nums = np.array(nums)
+        #else: 
+        #    nums = np.array(nums)
         nums = nums/np.sum(nums)
         nums = np.around(nums, 3)
         num = len(nums)

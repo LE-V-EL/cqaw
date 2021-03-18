@@ -62,11 +62,11 @@ class MidLevelFigure:
             trainNums = trainNums + [flat[curIdx:curIdx+num_of_numbers[i]]]
             curIdx = curIdx+num_of_numbers[i]
 
-        for i in range(counts[1]):
+        for j in range(counts[0], counts[0]+counts[1]):
             # Trims the flat array into array of arrays, 
             # FOR TEST SET
-            testNums = testNums + [flat[curIdx:curIdx+num_of_numbers[i]]]
-            curIdx = curIdx+num_of_numbers[i]
+            testNums = testNums + [flat[curIdx:curIdx+num_of_numbers[j]]]
+            curIdx = curIdx+num_of_numbers[j]
 
         return ([figFunc(nums=trainNums[i], testFlag=False) for i in range(counts[0])], 
             [figFunc(nums=testNums[i], testFlag=True) for i in range(counts[1])])

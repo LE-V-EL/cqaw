@@ -16,14 +16,14 @@ from HighLevelFigure import HighLevelFigure
 
 # The type of data classes we will be generating
 class Dataclass(Enum):
-    #LENGTH = 0
-    #LENGTHS = 1
-    #ANGLE = 2
-    #ANGLES = 3
+    LENGTH = 0
+    LENGTHS = 1
+    ANGLE = 2
+    ANGLES = 3
     SIMPLE_BAR=4 # simple bar plot, level 2
     SIMPLE_PIE=5 # simple pie plot, level 2
-    #ADVANCED_BAR=6 # advanced bar plots, level 3
-    #ADVANCED_PIE=7 # advanced pie plots, level 4
+    ADVANCED_BAR=6 # advanced bar plots, level 3
+    ADVANCED_PIE=7 # advanced pie plots, level 4
 
 SIMPLE_QUERIES = ['What is the length of the line in the figure?', 'What are the lengths of the lines in the figure, from left to right?', 
             'What is the size of the angle in the figure?','What are the sizes of the angles in the figure, from left to right?', 
