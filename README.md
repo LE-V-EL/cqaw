@@ -6,7 +6,6 @@ Combining codes from Rhoana/Perception and haehn/Instance-based-RN by Zhihao.
 - Author: Hayoun Oh @https://mpsych.org/
 
 - Thanks to Dr. Yunhai Wang and his group for providing mid-level dataset and generation code
-Generating datasets for CQAW
 
 ## To generate your own dataset
 1. Install conda
