@@ -24,7 +24,7 @@ class Dataclass(Enum):
     ADVANCED_PIE=7 # advanced pie plots, level 4
 
 ### CHANGE THIS PART FOR DATASET WITH DIFFERENT SIZE
-data_counts = {'train':8000, 'test':2000}
+FULL_DATA_SIZE = 100000
 path = './competition_data/'
 prefix = 'DAT_'
 
@@ -83,74 +83,88 @@ train_metadata = []
 test_metadata = []
 admin_metadata = []
 
-for data_class, mem in Dataclass.__members__.items():
-    print("Starting generating data for: "+data_class)
-    level_switcher = {
-        # This dictionary matches each data class with a tuple, 
-        # which includes (figure class, level in integer)
-        'LENGTH': (LowLevelFigure, 1), 
-        'LENGTHS': (LowLevelFigure, 1),
-        'ANGLE': (LowLevelFigure, 1), 
-        'ANGLES': (LowLevelFigure, 1),
-        'SIMPLE_BAR': (MidLevelFigure, 2),
-        'SIMPLE_PIE': (MidLevelFigure, 2),
-        'ADVANCED_BAR': (HighLevelFigure,3), 
-        'ADVANCED_PIE': (HighLevelFigure,3)
-    }
-    (figure_class, lev) = level_switcher.get(data_class)
-    
-    (TRAIN_DATA, TEST_DATA) = figure_class.generate_figures(data_class.lower(), counts=(data_counts['train'], data_counts['test']))
-    # For high level data, we need to match queries to each figure
-    if lev==3:
-        (train_queries, train_labels) = advanced_query_matcher(TRAIN_DATA)
-        (test_queries, test_labels) = advanced_query_matcher(TEST_DATA)
+# If the full data size is too large, we split it up in batches
+if FULL_DATA_SIZE>1000: 
+    max_batch_size = 10000
+    completed_data_size = 0
+    batch_idx = 0
+    while completed_data_size < FULL_DATA_SIZE:
+        Print("------------------------------------------")
+        print("Creating batch "+str(batch_idx))
+        batch_size = min(max_batch_size, FULL_DATA_SIZE-completed_data_size)
+        data_counts = {'train':int(round(batch_size*0.8)), 'test':batch_size-int(round(batch_size*0.8))}
+        print("Composed of "+str(data_counts['train'])+" training data and "+str(data_counts['test'])+" test data")
 
-    print("Data generation completed. Now exporting to files")
-    # Training dataset
-    for i in range(len(TRAIN_DATA)):
-        if (i%1000==999):
-            print("Exporting " + str(i) + "th image in data class "+data_class)
-        # Exports image files
-        td = TRAIN_DATA[i]
-        im_filename = prefix+data_class+'_train_'+str(DATASET_IDX)+str(i)+'.png'
-        cv2.imwrite(path+im_filename, td[0])
-        # Writing metadata
-        if lev<3:
-            # For lower level data, we directly add to the metadata
-            mtdt = {"filename": im_filename, "classtype": data_class.lower(), "level": lev, "query": SIMPLE_QUERIES[mem.value], "label":td[1].tolist()}
-        elif lev==3:
-            # For higher level data, we match it to the query
-            mtdt = {"filename": im_filename, "classtype": data_class.lower(), "level": lev, "query": train_queries[i], 
-                "label":train_labels[i]} 
-        train_metadata = train_metadata + [mtdt]
+        for data_class, mem in Dataclass.__members__.items():
+            print("Starting generating data for: "+data_class)
+            level_switcher = {
+                # This dictionary matches each data class with a tuple, 
+                # which includes (figure class, level in integer)
+                'LENGTH': (LowLevelFigure, 1), 
+                'LENGTHS': (LowLevelFigure, 1),
+                'ANGLE': (LowLevelFigure, 1), 
+                'ANGLES': (LowLevelFigure, 1),
+                'SIMPLE_BAR': (MidLevelFigure, 2),
+                'SIMPLE_PIE': (MidLevelFigure, 2),
+                'ADVANCED_BAR': (HighLevelFigure,3), 
+                'ADVANCED_PIE': (HighLevelFigure,3)
+            }
+            (figure_class, lev) = level_switcher.get(data_class)
+            
+            (TRAIN_DATA, TEST_DATA) = figure_class.generate_figures(data_class.lower(), counts=(data_counts['train'], data_counts['test']))
+            # For high level data, we need to match queries to each figure
+            if lev==3:
+                (train_queries, train_labels) = advanced_query_matcher(TRAIN_DATA)
+                (test_queries, test_labels) = advanced_query_matcher(TEST_DATA)
 
-    # Testing dataset
-    for i in range(len(TEST_DATA)): 
-        # Exports image files
-        td = TEST_DATA[i]
-        im_filename = prefix+data_class+'_test_'+str(DATASET_IDX)+str(i)+'.png'
-        cv2.imwrite(path+im_filename, td[0])
-        # Writing metadata
-        if lev<3:
-            # For lower level data, we directly add to the metadata 
-            mtdt = {"filename": im_filename, "classtype": data_class.lower(), "level": lev, "query": SIMPLE_QUERIES[mem.value]}
-            amtdt = { # Only the admin metadata has the true label
-                "filename": im_filename, "classtype": data_class.lower(), "level": lev, "query": SIMPLE_QUERIES[mem.value], 
-                "label":td[1].tolist()} 
-        elif lev==3:
-            # For higher level data, we match it to the query
-            mtdt = {"filename": im_filename, "classtype": data_class.lower(), "level": lev, "query": test_queries[i]}
-            amtdt = { # Only the admin metadata has the true label
-                "filename": im_filename, "classtype": data_class.lower(), "level": lev, "query": test_queries[i], 
-                "label":test_labels[i]} 
-            # And then add to metadata
+            print("Data generation completed. Now exporting to files")
+            # Training dataset
+            for i in range(len(TRAIN_DATA)):
+                if (i%1000==999):
+                    print("Exporting " + str(i) + "th image in data class "+data_class)
+                # Exports image files
+                td = TRAIN_DATA[i]
+                im_filename = prefix+data_class+'_train_'+str(i)+'b'+str(batch_idx)+'.png'
+                cv2.imwrite(path+im_filename, td[0])
+                # Writing metadata
+                if lev<3:
+                    # For lower level data, we directly add to the metadata
+                    mtdt = {"filename": im_filename, "classtype": data_class.lower(), "level": lev, "query": SIMPLE_QUERIES[mem.value], "label":td[1].tolist()}
+                elif lev==3:
+                    # For higher level data, we match it to the query
+                    mtdt = {"filename": im_filename, "classtype": data_class.lower(), "level": lev, "query": train_queries[i], 
+                        "label":train_labels[i]} 
+                train_metadata = train_metadata + [mtdt]
 
-        test_metadata = test_metadata + [mtdt]
-        admin_metadata = admin_metadata + [amtdt]
+            # Testing dataset
+            for i in range(len(TEST_DATA)): 
+                # Exports image files
+                td = TEST_DATA[i]
+                im_filename = prefix+data_class+'_test_'+str(i)+'b'+str(batch_idx)+'.png'
+                cv2.imwrite(path+im_filename, td[0])
+                # Writing metadata
+                if lev<3:
+                    # For lower level data, we directly add to the metadata 
+                    mtdt = {"filename": im_filename, "classtype": data_class.lower(), "level": lev, "query": SIMPLE_QUERIES[mem.value]}
+                    amtdt = { # Only the admin metadata has the true label
+                        "filename": im_filename, "classtype": data_class.lower(), "level": lev, "query": SIMPLE_QUERIES[mem.value], 
+                        "label":td[1].tolist()} 
+                elif lev==3:
+                    # For higher level data, we match it to the query
+                    mtdt = {"filename": im_filename, "classtype": data_class.lower(), "level": lev, "query": test_queries[i]}
+                    amtdt = { # Only the admin metadata has the true label
+                        "filename": im_filename, "classtype": data_class.lower(), "level": lev, "query": test_queries[i], 
+                        "label":test_labels[i]} 
+                    # And then add to metadata
 
-    with open(path+'TRAIN_metadata.txt', 'w') as outfile:
-        json.dump(train_metadata, outfile, default=convert)
-    with open(path+'TEST_metadata.txt', 'w') as outfile:
-        json.dump(test_metadata, outfile, default=convert)
-    with open(path+'ADMIN_metadata.txt', 'w') as outfile: 
-        json.dump(admin_metadata, outfile, default=convert)
+                test_metadata = test_metadata + [mtdt]
+                admin_metadata = admin_metadata + [amtdt]
+
+        with open(path+'TRAIN_metadata.txt', 'w') as outfile:
+            json.dump(train_metadata, outfile, default=convert)
+        with open(path+'TEST_metadata.txt', 'w') as outfile:
+            json.dump(test_metadata, outfile, default=convert)
+        with open(path+'ADMIN_metadata.txt', 'w') as outfile: 
+            json.dump(admin_metadata, outfile, default=convert)
+
+        batch_idx = batch_idx + 1
